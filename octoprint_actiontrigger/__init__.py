@@ -1,9 +1,5 @@
 # coding=utf-8
 from __future__ import absolute_import, unicode_literals
-import RPi.GPIO as GPIO
-GPIO.sermode(GPIO.BCM)
-psig = 18
-GPIO.setup(psig, GPIO.IN)
 
 import flask
 import logging
@@ -12,10 +8,15 @@ import time
 import octoprint.plugin
 import octoprint.settings
 
+import RPi.GPIO as GPIO
+
+GPIO.sermode(GPIO.BCM)
+psig = 18
+GPIO.setup(psig, GPIO.IN)
+
 default_settings = {
 	"action_door": True,
 	"action_filament": True
-
 }
 
 s = octoprint.plugin.plugin_settings("actiontrigger", defaults=default_settings)
@@ -76,12 +77,12 @@ class ActionTriggerPlugin(octoprint.plugin.TemplatePlugin,
 		def hook_actiontrigger(self, comm, line, action_trigger):
 				if action_trigger == None:
 					return
-				elif GPIO.input(psig) == False and s.get_boolean(["action_door"]) and comm.isPrinting():
+				elif action_trigger == True and GPIO.input(psig) == False and s.get_boolean(["action_door"]) and comm.isPrinting():
 						self._send_client_message(action_trigger, dict(line=line))
 						# might want to put this in separate function
 						comm.setPause(True)
 						self._printer.home("x")
-				elif GPIO.input(psig) == False and s.get_boolean(["action_door"]):
+				elif action_trigger == false and GPIO.input(psig) == True and s.get_boolean(["action_door"]):
 						self._send_client_message(action_trigger, dict(line=line))
 						comm.setPause(False)
 				elif action_trigger == "filament" and s.get_boolean(["action_filament"]) and self.filament_action == False:
